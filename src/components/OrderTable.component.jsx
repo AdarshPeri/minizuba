@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import OrderRow from './OrderRow.component';
 import Pagination from './Pagination.component';
 import { usePaginateOrders } from '../hooks/usePaginateOrders';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useWindowDimensions from '../hooks/useWindowDimensions';
 
@@ -189,6 +189,14 @@ const OrderTable = ({ orderData, packageTypeId }) => {
     navigate('/');
   };
 
+  useEffect(() => {
+    const quantityVal = searchParams.get('filter');
+    if (quantityVal) {
+      if (isNaN(quantityVal)) {
+        setQuantity('');
+      } else setQuantity(quantityVal);
+    }
+  }, [searchParams]);
   const handleChange = (e) => {
     const value = parseInt(e.target.value);
     if (!value) {
