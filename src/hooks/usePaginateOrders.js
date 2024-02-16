@@ -17,13 +17,14 @@ export const usePaginateOrders = ({ orderData }) => {
     orderData = orderData.filter((item) => item.Quantity === quantityFilter);
   const orderCount = orderData.length;
 
-  const lastIndex = pageToReturn * PAGE_SIZE;
-  const firstIndex =
-    pageToReturn === 1 ? 0 : (pageToReturn - 1) * PAGE_SIZE + 1;
+  const lastIndex = pageToReturn * PAGE_SIZE - 1;
+
+  const firstIndex = pageToReturn === 1 ? 0 : (pageToReturn - 1) * PAGE_SIZE;
+
   return {
     currentOrders: orderData.filter(
       (_, index) => index >= firstIndex && index <= lastIndex
     ),
-    orderCount
+    orderCount,
   };
 };

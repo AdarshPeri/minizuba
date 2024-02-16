@@ -3,8 +3,9 @@ import styled from 'styled-components';
 import OrderRow from './OrderRow.component';
 import Pagination from './Pagination.component';
 import { usePaginateOrders } from '../hooks/usePaginateOrders';
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { createContext, useContext, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import useWindowDimensions from '../hooks/useWindowDimensions';
 
 const StyledTable = styled.div`
   border: 1px solid #e5e7eb;
@@ -18,7 +19,7 @@ const StyledTable = styled.div`
 
 const CommonRow = styled.header`
   display: grid;
-  grid-template-columns: 0.8fr 0.8fr 1fr 2fr 1fr 0.6fr;
+  grid-template-columns: ${(props) => props.columns};
   column-gap: 2.4rem;
   align-items: center;
   transition: none;
@@ -48,7 +49,12 @@ const Button = styled.button`
   &:hover {
     background-color: #f3f3f3;
     color: #19bae5;
-    transition: all 0.5s;
+    transition: all 0.3s;
+  }
+
+  @media (max-width: 36em) {
+    padding: 0.8rem 1.6rem;
+    font-size: 1.2rem;
   }
 `;
 
@@ -56,12 +62,19 @@ const StyledForm = styled.form`
   display: flex;
   gap: 2rem;
   margin-bottom: 3rem;
+  justify-content: space-between;
 `;
 
 const StyledInput = styled.input`
   padding: 1.2rem 2.4rem;
   border-radius: 5px;
   margin-left: 15rem;
+
+  @media (max-width: 36em) {
+    padding: 0.6rem 0.2rem;
+    font-size: 1.4rem;
+    margin-left: 10rem;
+  }
 `;
 
 const H2 = styled.h2`
@@ -71,6 +84,25 @@ const H2 = styled.h2`
 
   @media (max-width: 45em) {
     font-size: 1.5rem;
+  }
+`;
+
+const ButtonText = styled.button`
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.3s;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  margin-bottom: 2rem;
+  align-self: flex-end;
+  background-color: #fff;
+  color: #4338ca;
+  padding: 1rem;
+  &:hover,
+  &:active {
+    color: #4338ca;
+    background-color: #f3f3f3;
   }
 `;
 
@@ -110,20 +142,32 @@ const StyledContainer = styled.div`
   align-items: center;
 `;
 
-export const Table = ({ children }) => {
-  return <StyledTable role='table'>{children}</StyledTable>;
+const TableContext = createContext();
+
+export const Table = ({ columns, children }) => {
+  return (
+    <TableContext.Provider value={{ columns }}>
+      <StyledTable role='table'>{children}</StyledTable>
+    </TableContext.Provider>
+  );
 };
 
 const Header = ({ children }) => {
+  const { columns } = useContext(TableContext);
   return (
-    <StyledHeader role='row' as='header'>
+    <StyledHeader role='row' as='header' columns={columns}>
       {children}
     </StyledHeader>
   );
 };
 
 const Row = ({ children }) => {
-  return <StyledRow role='row'>{children}</StyledRow>;
+  const { columns } = useContext(TableContext);
+  return (
+    <StyledRow role='row' columns={columns}>
+      {children}
+    </StyledRow>
+  );
 };
 
 const Body = ({ data, render }) => {
@@ -139,6 +183,11 @@ Table.Footer = Footer;
 const OrderTable = ({ orderData, packageTypeId }) => {
   const [quantity, setQuantity] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { isSmallScreen } = useWindowDimensions();
+  const moveBack = () => {
+    navigate('/');
+  };
 
   const handleChange = (e) => {
     const value = parseInt(e.target.value);
@@ -164,24 +213,44 @@ const OrderTable = ({ orderData, packageTypeId }) => {
 
   return (
     <StyledContainer>
+      <ButtonText onClick={moveBack}>&larr; Order Types</ButtonText>
       <StyledForm onSubmit={(e) => handleSubmit(e)}>
         <H2>Package Type: {packageTypeId}</H2>
-        <StyledInput
-          type='text'
-          placeholder='Quantity'
-          value={quantity}
-          onChange={(e) => handleChange(e)}
-        />
-        <Button type='submit'>Filter Orders</Button>
+        <>
+          <StyledInput
+            type='text'
+            placeholder='Quantity'
+            value={quantity}
+            onChange={(e) => handleChange(e)}
+          />
+          <Button type='submit'>Filter Orders</Button>
+        </>
       </StyledForm>
-      <Table>
+      <Table
+        columns={
+          isSmallScreen
+            ? '0.8fr 0.8fr 2fr 1fr'
+            : '0.8fr 0.8fr 1fr 2fr 1fr 0.6fr'
+        }
+      >
         <Table.Header>
-          <div>OrderLine ID</div>
-          <div>Order ID</div>
-          <div>Stock Item ID</div>
-          <div>Description</div>
-          <div>Quantity</div>
-          <div>Unit Price</div>
+          {isSmallScreen ? (
+            <>
+              <div>OrderLine ID</div>
+              <div>Order ID</div>
+              <div>Description</div>
+              <div>Quantity</div>
+            </>
+          ) : (
+            <>
+              <div>OrderLine ID</div>
+              <div>Order ID</div>
+              <div>Stock Item ID</div>
+              <div>Description</div>
+              <div>Quantity</div>
+              <div>Unit Price</div>
+            </>
+          )}
         </Table.Header>
 
         <Table.Body
